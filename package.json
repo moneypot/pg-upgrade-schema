@@ -1,0 +1,23 @@
+{
+  "name": "pg-upgrade-schema",
+  "version": "0.0.1",
+  "description": "Simple opinionated postgres schema upgrader",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "/dist"
+  ],
+  "dependencies": {
+    "debug": "^4.3.4",
+    "pg": "^8.11.5",
+    "tsafe": "^1.6.6"
+  },
+  "devDependencies": {
+    "@types/debug": "^4.1.12",
+    "@types/pg": "^8.11.6",
+    "tsx": "^4.11.0"
+  },
+  "scripts": {
+    "example": "DEBUG=* tsx ./example/index.ts"
+  }
+}
