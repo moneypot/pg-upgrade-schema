@@ -51,7 +51,7 @@ export default async function (
 
     if (version > maxVersion) {
       throw new Error(
-        `We are currently on version ${version} but we are only aware of upgrades to ${maxVersion} (i.e. the database is ahead of the code)`
+        `Our database is on version ${version} but we are only aware of how to upgrade to ${maxVersion} (i.e. the database is ahead of the code)`
       );
     }
 
