@@ -30,9 +30,8 @@ Tips:
 - In your npm scripts add something like:
 
 ```
-{
-   "pg_dump": "/Applications/Postgres.app/Contents/Versions/latest/bin/pg_dump --schema-only -d yourdbname > schema.sql"
-}
+    "resetdb": "dropdb yourdbname && createdb yourdbname",
+    "schema_dump": "pg_dump -d yourdbname --schema-only > schema.sql"
 ```
 
 So you have a schema.sql file, which you can commit. And then you can diff.
