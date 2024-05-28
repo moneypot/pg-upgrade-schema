@@ -15,9 +15,11 @@
   "devDependencies": {
     "@types/debug": "^4.1.12",
     "@types/pg": "^8.11.6",
-    "tsx": "^4.11.0"
+    "tsx": "^4.11.0",
+    "typescript": "^5.4.5"
   },
   "scripts": {
-    "example": "DEBUG=* tsx ./example/index.ts"
+    "example": "DEBUG=* tsx ./example/index.ts",
+    "publish": "tsc && npm publish"
   }
 }
