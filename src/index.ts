@@ -1,6 +1,8 @@
 import { default as debugImport } from "debug";
 import type { Client as PgClient } from "pg";
 import { assert } from "tsafe";
+import { readDirectory } from "./read-directory";
+export { readDirectory } from "./read-directory";
 
 interface Versions {
   [key: number]:
@@ -10,12 +12,12 @@ interface Versions {
 
 const debug = debugImport("pg-upgrade-schema");
 
-export async function ensure(
+export default async function (
   client: PgClient,
-  versions: Versions,
+  dirname: string,
   versionTableName: string = "pg_upgrade_schema_versions" // note: this doesn't ever get sql escaped
 ) {
-  validateVersions(versions);
+  const versions = await readDirectory(dirname);
   debug("ensure called, making sure we can query");
 
   const res = await client.query("SELECT version()");
@@ -45,7 +47,7 @@ export async function ensure(
     assert(version >= 0);
     console.log("Currently on pg-upgrade-schema version: ", version);
 
-    const maxVersion = Object.keys(versions).length;
+    const maxVersion = versions.size;
 
     if (version > maxVersion) {
       throw new Error(
@@ -58,7 +60,7 @@ export async function ensure(
 
       try {
         await client.query(`BEGIN`);
-        const upgrade = versions[i];
+        const upgrade = await versions.get(i)();
 
         let ret;
 
@@ -70,7 +72,7 @@ export async function ensure(
             ret = await client.query(ret);
           }
         } else {
-          throw new Error("unknown upgrade script");
+          throw new Error(`unknown upgrade script in version ${i}`);
         }
 
         debug("After upgrade ", i, " got result ", ret ? ret.rows : "<void>");
@@ -107,15 +109,6 @@ async function createVersionTable(client: PgClient, versionTableName: string) {
     COMMIT;
   `);
   debug("created table ", versionTableName);
-}
-
-async function validateVersions(versions: Versions) {
-  const len = Object.keys(versions).length;
-  for (let i = 1; i <= len; i++) {
-    if (!Object.hasOwn(versions, `${i}`)) {
-      throw new Error(`Expected version to have ${i} but it didn't`);
-    }
-  }
 }
 
 async function withLock(client: PgClient, f: (client: PgClient) => void) {

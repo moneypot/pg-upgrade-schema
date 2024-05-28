@@ -15,8 +15,11 @@ It will start off by creating a table:
 
 Which will track all the upgrades of the database.
 
-You can now use `PgUpgradeSchema.ensure` to pass in upgrade scripts to upgrade the database.
-The first version must be 1 and increase by 1 after that. Each upgrade script can be a string (which is executed as SQL), or can be a function (which takes a PgClient) and if it returns a string that string is executed as SQL.
+You can now use `pg-upgrade-schema` to pass in upgrade scripts to upgrade the database.
+
+All your upgrade scripts must be in a directory. The only thing allowed in that directory is upgrade scripts. An upgrade script must start with the version number (but can be prefixed with 0s for lexical sorting).
+
+An upgrade script can be .sql which is executed againt the db. Or it can be a .js or .ts file, which is imported and the default exported function will be called with a PgClient passed in as the first argument. If it returns a string, that is also executed.
 
 See: /example directory
 
@@ -30,4 +33,6 @@ Tips:
 }
 ```
 
-So you have a schema.sql file you can diff and look at
+So you have a schema.sql file, which you can commit. And then you can diff.
+
+-
