@@ -20,6 +20,6 @@
   },
   "scripts": {
     "example": "DEBUG=* tsx ./example/index.ts",
-    "publish": "tsc && npm publish"
+    "build-and-publish": "tsc && npm publish"
   }
 }
