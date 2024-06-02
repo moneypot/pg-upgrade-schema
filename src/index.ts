@@ -15,7 +15,8 @@ const debug = debugImport("pg-upgrade-schema");
 export default async function (
   client: PgClient,
   dirname: string,
-  versionTableName: string = "pg_upgrade_schema_versions" // note: this doesn't ever get sql escaped
+  versionTableName: string = "pg_upgrade_schema_versions", // note: this doesn't ever get sql escaped
+  schemaName: string = "pgupgradeschema" // where the version table goes, not escaped
 ) {
   const versions = await readDirectory(dirname);
   debug("ensure called, making sure we can query");
@@ -24,21 +25,23 @@ export default async function (
   assert(res.rowCount == 1);
   debug("Connected to postgres: ", res.rows[0].version);
 
+  await client.query(`CREATE SCHEMA IF NOT EXISTS ${schemaName}`);
+
   // Get a lock so this doesn't happen on multiple instances at the same time
   await withLock(client, async (client) => {
     let version = -1;
     try {
       const res = await client.query(
-        `SELECT version FROM ${versionTableName} ORDER BY version DESC LIMIT 1`
+        `SELECT version FROM ${schemaName}.${versionTableName} ORDER BY version DESC LIMIT 1`
       );
       assert(res.rows.length == 1);
       version = res.rows[0].version;
     } catch (err: any) {
       if (err.code === "42P01") {
         console.warn(
-          `Could not detect table "${versionTableName}" table, creating it`
+          `Could not detect table "${schemaName}.${versionTableName}" table, creating it`
         );
-        await createVersionTable(client, versionTableName);
+        await createVersionTable(client, versionTableName, schemaName);
         version = 0;
       } else {
         throw err;
@@ -78,7 +81,7 @@ export default async function (
         debug("After upgrade ", i, " got result ", ret ? ret.rows : "<void>");
 
         await client.query(
-          `INSERT INTO ${versionTableName}(version) VALUES($1)`,
+          `INSERT INTO ${schemaName}.${versionTableName}(version) VALUES($1)`,
           [i]
         );
         await client.query(`COMMIT`);
@@ -97,15 +100,19 @@ export default async function (
   });
 }
 
-async function createVersionTable(client: PgClient, versionTableName: string) {
+async function createVersionTable(
+  client: PgClient,
+  versionTableName: string,
+  schemaName: string
+) {
   debug("trying to create");
   await client.query(`
     BEGIN;
-    CREATE TABLE ${versionTableName}(
+    CREATE TABLE ${schemaName}.${versionTableName}(
       version     int           NOT NULL PRIMARY KEY,
       updated_at  timestamptz   NOT NULL DEFAULT clock_timestamp()
     );
-    INSERT INTO ${versionTableName}(version) VALUES(0);
+    INSERT INTO ${schemaName}.${versionTableName}(version) VALUES(0);
     COMMIT;
   `);
   debug("created table ", versionTableName);
